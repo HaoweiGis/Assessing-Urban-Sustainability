@@ -8,4 +8,4 @@
 
 ### 2_OBPR:Risk calculation
 
-### 3_Landscape:Landscape indice calculation
+### 3_Landscape:Landscape index calculation
