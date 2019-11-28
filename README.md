@@ -1,5 +1,5 @@
-# Assessing-Urban-Sustainability
-1_Land Use Classification(GoogleEarthEngine)
+## Assessing-Urban-Sustainability
+# 1_Land Use Classification(GoogleEarthEngine)
 
 1 DataProcess.js:Remote Sensing Data Pre-processing
 
