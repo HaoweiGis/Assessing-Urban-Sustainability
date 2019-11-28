@@ -6,6 +6,6 @@
 2 EcologyValue.js:Calculation NPP spatiotemporal adjustment factor;
 3 Classification_OBPR.js:Object-Based Post-Classification Refinement;
 
-### 2_OBPR Risk calculation
+### 2_OBPR:Risk calculation
 
-### 3_Landscape Landscape indice calculation
+### 3_Landscape:Landscape indice calculation
