@@ -16,7 +16,8 @@ def mathdata(num, His):
     DataStr = ''.join(Data).replace(str(num) + '=', '')
     return DataStr
 
-
+# THisFeatures 是在GEE上导出的交通小区内不同像元的面积 可以用来做优势比例分析
+# 0,{1=1767.7333333333333, 3=132.72156862745098, 2=257.9411764705883, 7=1362.8156862745097, 6=8062.364705882347, 4=468.0, 5=1502.0274509803905, 0=110.0}
 csvFile = open("THisFeatures.csv", "r").readlines()
 fileNew = open('THis.csv', 'w')
 
