@@ -9,3 +9,5 @@
 ### 2_OBPR:Risk calculation
 
 ### 3_Landscape:Landscape index calculation
+
+### 4 增加了基于DeeplabV3+的语义分割模型在全色融合的0.8m高分2号数据上进行建筑提取
