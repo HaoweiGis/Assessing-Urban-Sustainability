@@ -53,8 +53,8 @@ conda install tensorflow-gpu==1.14
 conda install gdal
 conda install pillow
 
-新样本的制作过程
-将采样的shp文件转换为值为1的tif数据
+# 新样本的制作过程
+将shp转换为栅格后裁剪
 然后栅格计算器Con(IsNull("Subject01.tif"),0,"Subject01.tif")
 python gdal_edit.py Subject01_building_footprints.tif -unsetnodata
 
