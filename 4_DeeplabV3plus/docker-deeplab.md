@@ -30,6 +30,10 @@ To avoid this, run the container by specifying your user's userid:
 
 `sudo docker run -it  --rm --name 'deeplab' -u 1001 -v /home/deyu/tianchi_buildings:/data  --gpus all tensorflow/tensorflow:1.14.0-gpu-py3-jupyter`
 
+docker run -it --rm --name 'deep-ai-v1' -v /volumes/massdata2/wxy:/data --shm-size 10g --gpus all pytorch/pytorch:1.5-cuda10.1-cudnn7-devel
+
+https://github.com/docker/cli/issues/1278
+
 docker start tf1.14
 `sudo docker exec -it --user root tf1.14 /bin/bash`
 
@@ -40,8 +44,31 @@ print('GPU',tf.test.is_gpu_available())
 ```
 
 # 更新阿里apt镜像安装vim，gdal
+cp /etc/apt/sources.list /etc/apt/sources.list.20200617
 vim /etc/apt/sources.list
-参考https://blog.csdn.net/f156207495/article/details/88563632
+参考 https://www.jianshu.com/p/16502ed02e29
+
+deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
+
+deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse
+
+deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse
+
+deb http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse
+
+deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
+
+deb-src http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
+
+deb-src http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse
+
+deb-src http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse
+
+deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse
+
+deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
+
+
 apt update
 apt install vim
 apt install gdal-bin python-gdal python3-gdal libgdal-dev
@@ -63,7 +90,7 @@ python gdal_edit.py Subject01_building_footprints.tif -unsetnodata
 /data/datasets/Image_process# bash 1clip_sampleimg.sh
 for i in *;do echo $i; gdalinfo $i|grep ^Size|cut -d' ' -f3-4|sed -e 's/ //g'|cut -d',' -f1;done 数据检查
 
-/data/datasets/allimage# ls *.png|cut -d. -f1>../all.txt
+/data/datasets/allimage#  
 python 2split_index.py 1168 80 (总数 验证数)数据切分代码 360 40
 mv train.txt trainval.txt val.txt phindex/
 
@@ -73,6 +100,9 @@ vi train_utils.py  206 exclude_list = ['global_step','logits']
 
 # 生成tfrecord数据集
 python /data/models-master/research/deeplab/datasets/build_voc2012_data.py  --image_folder="/data/datasets/allimage"   --semantic_segmentation_folder="/data/datasets/alllabel"   --list_folder="/data/datasets/allindex"   --image_format="png"   --output_dir="/data/datasets/alltfrecord"
+
+
+python /data/models-master/research/deeplab/datasets/build_voc2012_data.py  --image_folder="/data/datasets/rs2019/image"   --semantic_segmentation_folder="/data/datasets/rs2019/label"   --list_folder="/data/datasets/rs2019/index"   --image_format="png"   --output_dir="/data/datasets/rs2019/tfrecord"
 
 # 模型训练
 
@@ -84,11 +114,16 @@ screen -L -t name -S name ./name      screen -r 回归 ctrl+a+d
 
 /data/models-master/research/deeplab/exp
 mkdir train vis eval
+
+screen -L python /data/models-master/research/deeplab/train.py   --logtostderr   --num_clones=4   --training_number_of_steps=500   --train_split="train"   --model_variant="xception_71"   --atrous_rates=4   --atrous_rates=12   --atrous_rates=18   --output_stride=16   --decoder_output_stride=4   --train_crop_size="513,513"   --train_batch_size=12   --dataset="rs2019"   --initialize_last_layer=False   --last_layers_contain_logits_only=True   --fine_tune_batch_norm=True   --tf_initial_checkpoint='/data/models-master/research/deeplab/backbone/train_fine/model.ckpt'   --train_logdir='/data/datasets/rs2019/train/'   --dataset_dir='/data/datasets/rs2019/tfrecord'
+
 screen -L python /data/models-master/research/deeplab/train.py   --logtostderr   --num_clones=4   --training_number_of_steps=5000   --train_split="train"   --model_variant="xception_71"   --atrous_rates=4   --atrous_rates=12   --atrous_rates=18   --output_stride=16   --decoder_output_stride=4   --train_crop_size="513,513"   --train_batch_size=12   --dataset="mydata"   --initialize_last_layer=False   --last_layers_contain_logits_only=True   --fine_tune_batch_norm=True   --tf_initial_checkpoint='/data/models-master/research/deeplab/backbone/train_fine/model.ckpt'   --train_logdir='/data/models-master/research/deeplab/exp/alldata_train/train/'   --dataset_dir='/data/datasets/alltfrecord'
+
+python /data/models-master/research/deeplab/eval.py  --logtostderr --eval_split="val"     --model_variant="xception_71"     --atrous_rates=4    --atrous_rates=12    --atrous_rates=18    --output_stride=16    --decoder_output_stride=4    --eval_crop_size="513,513"     --dataset="rs2019"     --initialize_last_layer=False    --last_layers_contain_logits_only=True    --checkpoint_dir='/data/datasets/rs2019/train/'   --eval_logdir='/data/datasets/rs2019/eval/'     --dataset_dir='/data/datasets/rs2019/tfrecord'
 
 python /data/models-master/research/deeplab/eval.py  --logtostderr --eval_split="val"     --model_variant="xception_71"     --atrous_rates=4    --atrous_rates=12    --atrous_rates=18    --output_stride=16    --decoder_output_stride=4    --eval_crop_size="513,513"     --dataset="mydata"     --initialize_last_layer=False    --last_layers_contain_logits_only=True    --checkpoint_dir='/data/models-master/research/deeplab/exp/alldata_train/train/'   --eval_logdir='/data/models-master/research/deeplab/exp/alldata_train/eval/'     --dataset_dir='/data/datasets/alltfrecord'
 
-python /data/models-master/research/deeplab/vis.py     --logtostderr     --vis_split="val"     --model_variant="xception_71"     --atrous_rates=6     --atrous_rates=12     --atrous_rates=18     --output_stride=16     --decoder_output_stride=4     --vis_crop_size="513,513"     --dataset="mydata"     --colormap_type="pascal"     --checkpoint_dir='/data/models-master/research/deeplab/exp/alldata_train/train/'     --vis_logdir='/data/models-master/research/deeplab/exp/alldata_train/vis/'    --dataset_dir='/data/datasets/alltfrecord'
+python /data/models-master/research/deeplab/vis.py     --logtostderr     --vis_split="val"     --model_variant="xception_71"     --atrous_rates=6     --atrous_rates=12     --atrous_rates=18     --output_stride=16     --decoder_output_stride=4     --vis_crop_size="513,513"     --dataset="rs2019"     --colormap_type="pascal"     --checkpoint_dir='/data/datasets/rs2019/train/'     --vis_logdir='/data/datasets/rs2019/vis/'    --dataset_dir='/data/datasets/rs2019/tfrecord'
 
 python /data/models-master/research/deeplab/export_model.py  --logtostderr  --checkpoint_path="/data/models-master/research/deeplab/exp/alldata_train/train/model.ckpt-10000"   --atrous_rates=4  --atrous_rates=12  --atrous_rates=18  --output_stride=16  --decoder_output_stride=4  --export_path="/data/datasets/model/frozen_inference_graph.pb"    --model_variant="xception_71"  --num_classes=2   --crop_size=513  --crop_size=513  --initialize_last_layer=False  --last_layers_contain_logits_only=True  --fine_tune_batch_norm=True   --inference_scales=1.0
 
