@@ -73,6 +73,11 @@ apt update
 apt install vim
 apt install gdal-bin python-gdal python3-gdal libgdal-dev
 
+# 构建anaconda镜像源
+vim ~/.condarc
+
+
+
 # 构建anaconda虚拟环境
 conda create -n deeplab
 conda activate deeplab
