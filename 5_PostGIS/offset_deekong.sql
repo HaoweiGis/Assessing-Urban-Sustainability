@@ -1,4 +1,4 @@
-CREATE FUNCTION citygis_offset_geometry(geom geometry, origin text, destination text) returns geometry
+CREATE FUNCTION deekong_offset_geometry(geom geometry, origin text, destination text) returns geometry
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -19,13 +19,13 @@ BEGIN
  END IF;
  type := GeometryType(geom);
  IF type = 'POINT' THEN
-  result := citygis_offset_point(geom, origin, destination);
+  result := deekong_offset_point(geom, origin, destination);
  ELSIF type = 'LINESTRING' THEN
-  result := citygis_offset_linestring(geom, origin, destination);
+  result := deekong_offset_linestring(geom, origin, destination);
  ELSIF type = 'POLYGON' THEN
-  result := citygis_offset_polygon(geom, origin, destination);
+  result := deekong_offset_polygon(geom, origin, destination);
  ELSIF type in ('GEOMETRYCOLLECTION', 'MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON') THEN
-  result := citygis_offset_collection(geom, origin, destination);
+  result := deekong_offset_collection(geom, origin, destination);
  ELSE
   result := geom;
  END IF;
@@ -33,7 +33,7 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION citygis_offset_point(geom geometry, origin text, destination text) returns geometry
+CREATE FUNCTION deekong_offset_point(geom geometry, origin text, destination text) returns geometry
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -56,23 +56,23 @@ BEGIN
  x = st_x(geom);
  y = st_y(geom);
  IF origin = 'wgs' and destination = 'gcj' THEN
-  pt = citygis_wgs2gcj(x, y);
+  pt = deekong_wgs2gcj(x, y);
  elsIF origin = 'wgs' and destination = 'bd' THEN
-  pt = citygis_wgs2bd(x, y);
+  pt = deekong_wgs2bd(x, y);
  elsIF origin = 'gcj' and destination = 'wgs' THEN
-  pt = citygis_gcj2wgs(x,y);
+  pt = deekong_gcj2wgs(x,y);
  elsIF origin ='gcj' and destination = 'bd' THEN
-  pt = citygis_gcj2bd(x, y);
+  pt = deekong_gcj2bd(x, y);
  elsIF origin = 'bd' and destination = 'wgs' THEN
-  pt = citygis_bd2wgs(x, y);
+  pt = deekong_bd2wgs(x, y);
  elsIF origin = 'bd' and destination = 'gcj' THEN
-  pt = citygis_bd2gcj(x, y);
+  pt = deekong_bd2gcj(x, y);
  END IF;
  return st_makePoint(pt[0], pt[1]);
 END;
 $$;
 
-CREATE FUNCTION citygis_wgs2gcj(wgslon double precision, wgslat double precision) returns point
+CREATE FUNCTION deekong_wgs2gcj(wgslon double precision, wgslat double precision) returns point
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -88,13 +88,13 @@ DECLARE
  gcjLat double precision;
  gcjLon double precision;
 BEGIN
- IF citygis_outofchina(wgsLon, wgsLat) THEN
+ IF deekong_outofchina(wgsLon, wgsLat) THEN
   return point (wgsLon, wgsLat);
  END IF;
  b := a * (1 - f);
  ee := (a * a - b * b) / (a * a);
- dLat := citygis_transformLat(wgsLon - 105.0, wgsLat - 35.0);
- dLon := citygis_transformLon(wgsLon - 105.0, wgsLat - 35.0);
+ dLat := deekong_transformLat(wgsLon - 105.0, wgsLat - 35.0);
+ dLon := deekong_transformLon(wgsLon - 105.0, wgsLat - 35.0);
  radLat := wgsLat / 180.0 * PI();
  magic := sin(radLat);
  magic := 1 - ee * magic * magic;
@@ -109,7 +109,7 @@ $$;
 
 
 
-CREATE FUNCTION citygis_gcj2bd(gcjlon double precision, gcjlat double precision) returns point
+CREATE FUNCTION deekong_gcj2bd(gcjlon double precision, gcjlat double precision) returns point
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -128,7 +128,7 @@ $$;
 
 
 
-CREATE FUNCTION citygis_gcj2wgs(gcjlon double precision, gcjlat double precision) returns point
+CREATE FUNCTION deekong_gcj2wgs(gcjlon double precision, gcjlat double precision) returns point
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -140,12 +140,12 @@ DECLARE
 BEGIN
   g0 := point(gcjLon, gcjLat);
   w0 := g0;
-  g1 := citygis_wgs2gcj(w0[0], w0[1]);
+  g1 := deekong_wgs2gcj(w0[0], w0[1]);
   w1 := w0 - (g1 - g0);
   delta := w1 - w0;
   WHILE (abs(delta[0]) >= 1e-6 or abs(delta[1]) >= 1e-6) LOOP
     w0 := w1;
-    g1 := citygis_wgs2gcj(w0[0], w0[1]);
+    g1 := deekong_wgs2gcj(w0[0], w0[1]);
     w1 := w0 - (g1 - g0);
     delta := w1 - w0;
   end LOOP;
@@ -153,18 +153,18 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION citygis_bd2wgs(bdlon double precision, bdlat double precision) returns point
+CREATE FUNCTION deekong_bd2wgs(bdlon double precision, bdlat double precision) returns point
 LANGUAGE plpgsql
 AS $$
 DECLARE
  gcj point;
 BEGIN
- gcj := citygis_bd2gcj(bdLon, bdLat);
- return citygis_gcj2wgs(gcj[0], gcj[1]);
+ gcj := deekong_bd2gcj(bdLon, bdLat);
+ return deekong_gcj2wgs(gcj[0], gcj[1]);
 END;
 $$;
 
-CREATE FUNCTION citygis_bd2gcj(bdlon double precision, bdlat double precision) returns point
+CREATE FUNCTION deekong_bd2gcj(bdlon double precision, bdlat double precision) returns point
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -185,7 +185,7 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION citygis_offset_linestring(geom geometry, origin text, destination text) returns geometry
+CREATE FUNCTION deekong_offset_linestring(geom geometry, origin text, destination text) returns geometry
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -210,7 +210,7 @@ BEGIN
  result := array_fill(null::geometry, ARRAY[ST_NumPoints(geom)]);
  FOR rowPoint in SELECT ST_DumpPoints(geom) as f LOOP
   dump := rowPoint.f;
-  vertex := citygis_offset_point((dump).geom, origin, destination);
+  vertex := deekong_offset_point((dump).geom, origin, destination);
   result[i] := vertex;
   i := i + 1;
  end LOOP;
@@ -219,7 +219,7 @@ END;
 $$;
 
 
-CREATE FUNCTION citygis_offset_polygon(geom geometry, origin text, destination text) returns geometry
+CREATE FUNCTION deekong_offset_polygon(geom geometry, origin text, destination text) returns geometry
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -241,12 +241,12 @@ BEGIN
  IF origin = destination THEN
   return geom;
  END IF;
- outerRing := citygis_offset_linestring(st_exteriorRing(geom), origin, destination);
+ outerRing := deekong_offset_linestring(st_exteriorRing(geom), origin, destination);
  n := ST_NumInteriorRings(geom);
  innerRings := array_fill(null::geometry, ARRAY[n]);
  for i in 1..n LOOP
   ring := st_InteriorRingN(geom, i);
-  ring := citygis_offset_linestring(ring, origin, destination);
+  ring := deekong_offset_linestring(ring, origin, destination);
   innerRings[i] := ring;
  end LOOP;
  return st_MakePolygon(outerRing, innerRings);
@@ -254,7 +254,7 @@ END;
 $$;
 
 
-CREATE FUNCTION citygis_offset_collection(geom geometry, origin text, destination text) returns geometry
+CREATE FUNCTION deekong_offset_collection(geom geometry, origin text, destination text) returns geometry
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -270,13 +270,13 @@ BEGIN
   child := st_GeometryN(geom, i);
   type := GeometryType(child);
   IF type = 'POINT' THEN
-   child := citygis_offset_point(child, origin, destination);
+   child := deekong_offset_point(child, origin, destination);
   ELSIF type = 'LINESTRING' THEN
-   child := citygis_offset_linestring(child, origin, destination);
+   child := deekong_offset_linestring(child, origin, destination);
   ELSIF type = 'POLYGON' THEN
-   child := citygis_offset_polygon(child, origin, destination);
+   child := deekong_offset_polygon(child, origin, destination);
   ELSIF type in ('GEOMETRYCOLLECTION', 'MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON') THEN
-   child := citygis_offset_collection(child, origin, destination);
+   child := deekong_offset_collection(child, origin, destination);
   ELSE
    RAISE NOTICE 'UNKNOWN %', type;
   END IF;
@@ -286,7 +286,7 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION citygis_outofchina(lon double precision, lat double precision) returns boolean
+CREATE FUNCTION deekong_outofchina(lon double precision, lat double precision) returns boolean
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -301,7 +301,7 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION citygis_transformlat(x double precision, y double precision) returns double precision
+CREATE FUNCTION deekong_transformlat(x double precision, y double precision) returns double precision
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -315,7 +315,7 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION citygis_transformlon(x double precision, y double precision) returns double precision
+CREATE FUNCTION deekong_transformlon(x double precision, y double precision) returns double precision
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -332,4 +332,4 @@ $$;
 
 
 -- UPDATE public.township_lanzhou
--- SET the_geometry_gcj=citygis_offset_geometry(geom,'gcj','wgs');
+-- SET the_geometry_gcj=deekong_offset_geometry(geom,'source','target');

@@ -30,7 +30,7 @@ To avoid this, run the container by specifying your user's userid:
 
 `sudo docker run -it  --rm --name 'deeplab' -u 1001 -v /home/deyu/tianchi_buildings:/data  --gpus all tensorflow/tensorflow:1.14.0-gpu-py3-jupyter`
 
-docker run -it --rm --name 'deep-ai-v1' -v /volumes/massdata2/wxy:/data --shm-size 10g --gpus all pytorch/pytorch:1.5-cuda10.1-cudnn7-devel
+docker run -it --rm --name 'deep-ai-v1' --net host -v /volumes/massdata2/wxy:/data --shm-size 10g --gpus all pytorch/pytorch:1.5-cuda10.1-cudnn7-devel
 
 https://github.com/docker/cli/issues/1278
 
